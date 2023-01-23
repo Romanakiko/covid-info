@@ -9,6 +9,8 @@ import {buffer, bufferCount, combineAll, combineLatestAll, from, map, mergeMap, 
 export class CovidService {
 
   constructor(private http: HttpClient) { }
+
+  //  TODO: URL to proxy
   // https://api.apify.com/v2/key-value-stores/tVaYRsPHLjNdNBu7S/records/LATEST?disableRedirect=true
 //  TODO: make countable buffer
   public getCovidInfoByCountries() {

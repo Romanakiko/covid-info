@@ -10,6 +10,7 @@ export class CountriesService {
 
   constructor(private http: HttpClient) { }
 
+//  TODO: URL to proxy
   private getGeoJson(): Observable<GeoJSON> {
     return this.http.get<GeoJSON>("https://s3.amazonaws.com/rawstore.datahub.io/23f420f929e0e09c39d916b8aaa166fb.geojson");
   }

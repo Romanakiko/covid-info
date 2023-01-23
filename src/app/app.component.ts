@@ -10,8 +10,10 @@ import {
   marker,
   Circle,
   Polygon,
+  Map,
   Marker, LatLngExpression
 } from "leaflet";
+import * as L from "leaflet"
 import {ArrayType} from "@angular/compiler";
 import {CountriesService} from "./countries/countries.service";
 import {CovidService} from "./covid/covid.service";
@@ -33,7 +35,7 @@ export class AppComponent implements OnInit{
 
   constructor(private countriesService: CountriesService,
               private covidService: CovidService) {
-    this.setMaxColors();
+    this.setCovidInfo();
   }
 
   ngOnInit(): void {
@@ -59,31 +61,67 @@ export class AppComponent implements OnInit{
     let res: Polygon<any>[] = [];
     countries.forEach(country => res.push(
       polygon(country.coordinates as (LatLngExpression[] | LatLngExpression[][] | LatLngExpression[][][]))
-        .setStyle({fillColor: this.getColor(country.name)})));
+        .setStyle({fillColor: this.countryColor(country.name)})));
     return res;
   }
 
-  setMaxColors(): void {
+  setCovidInfo(): void {
     this.covidService.getCovidInfoByCountries().subscribe(countries => {
       this.covidInfo = countries;
-      this.increment = 255 / Math.max(... countries.map(c => c.infected).filter(val => val && val > 0));
+      this.increment = 100 / Math.max(... countries.map(c => c.infected).filter(val => val && val > 0));
       this.setColorsDone = true;
       console.log(this.covidInfo);
     });
   }
 
-  getColor(country: string): string {
-    console.log(this.increment);
-    if(!this.setColorsDone) {
-      return '#62b7b7';
-    }
+  countryColor(country: string): string  {
     let countryInfo = this.covidInfo.find(c => c.country === country);
-    if(countryInfo && countryInfo.infected && countryInfo.infected > 0) {
-      console.log(countryInfo!.country);
-      console.log(Math.trunc(this.increment * countryInfo.infected));
+      if(countryInfo && countryInfo.infected && countryInfo.infected > 0) {
+        console.log(countryInfo!.country);
+        console.log(Math.trunc(this.increment * countryInfo.infected));
 
-      return ('#' + (this.initialColor + Math.trunc(this.increment * countryInfo.infected)).toString(16));
-    }
-    else return '#62b7b7';
+        return this.getColor(Math.trunc(this.increment * countryInfo.infected));
+      }
+      else return '#cbffbf';
   }
-}
+
+  getColor = (d: number) => {
+    return d > 70 ? '#ec0c0c' :
+      d > 50 ? '#f64e14' :
+        d > 30 ? '#ff9423' :
+          d > 20 ? '#ffda3a' :
+            d > 10 ? '#ffff5c' :
+              d > 5 ? '#f3ff8d' :
+                d > 1 ? '#d7ffa7' :
+                  '#cbffbf';
+  }
+
+  onMapReady(map: Map) {
+
+    const legend = new L.Control({ position: 'bottomright' });
+
+    legend.onAdd = map => {
+      let div = L.DomUtil.create('div', 'info legend'),
+        grades = [0, 1, 5, 10, 20, 30, 50, 70],
+        increment = 36718053 / 100000,
+        labels = [],
+        from, to;
+
+      for (let i = 0; i < grades.length; i++) {
+        from = Math.trunc(grades[i] * increment);
+        to = Math.trunc(grades[i + 1] * increment);
+
+        labels.push(
+          '<i style="background:' + this.getColor(grades[i]) + '"></i> ' +
+          from + 'k'+ (to ? '&ndash;' + to + 'k' : '+'));
+      }
+
+      div.innerHTML = labels.join('<br>');
+      return div;
+    };
+
+    legend.addTo(map);
+  }
+
+
+  }
